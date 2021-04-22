@@ -12,8 +12,9 @@ const createRouter = () =>
   new VueRouter({
     scrollBehavior: () => ({ x: 0, y: 0 }),
     routes: routes.constant,
-    mode: process.env.VUE_APP_ROUTER_MODE, // history require service support
-    base: process.env.VUE_APP_ROUTER_BASE
+    mode: 'history',// process.env.VUE_APP_ROUTER_MODE // history require service support
+    base: process.env.BASE_URL
+    // base: process.env.VUE_APP_ROUTER_BASE
   });
 
 export const router = createRouter();

@@ -15,5 +15,5 @@ module.exports = {
   },
   publicPath: process.env.NODE_ENV === 'production'
     ? '/tm-generate-image/'
-    : '/'
+    : '/tm-generate-image/'
 }
