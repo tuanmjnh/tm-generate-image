@@ -2,8 +2,13 @@
   <div class="text-gray-500 antialiased bg-white js-focus-visible">
     <div class="sticky top-0 z-40 lg:z-50 w-full max-w-8xl mx-auto bg-white flex-none flex">
       <div class="flex-none pl-4 sm:pl-6 xl:pl-8 flex items-center border-b border-gray-200 lg:border-b-0 lg:w-60 xl:w-72">
-        <a class="overflow-hidden w-10 md:w-auto text-blue-600 font-bold" href="/">
-          TM generate image from video</a>
+        <router-link to="/" v-slot="{ href, navigate}" custom>
+          <a :href="href" @click="navigate" class="overflow-hidden w-10 md:w-auto text-blue-600 font-bold">
+            TM generate image from video
+          </a>
+        </router-link>
+        <!-- <a class="overflow-hidden w-10 md:w-auto text-blue-600 font-bold" href="/">
+          TM generate image from video</a> -->
       </div>
       <div class="flex-auto border-b border-gray-200 h-18 flex items-center justify-between px-4 sm:px-6 lg:mx-6 lg:px-0 xl:mx-8"><button
                 type="button"
@@ -75,7 +80,7 @@
                           <path d="M18 9l-6 3v6l6-3V9z" fill="#C4B5FD"></path>
                         </svg>
                       </div>
-                      Generate tm
+                      Generate
                     </a>
                   </li>
                 </router-link>
