@@ -21,6 +21,7 @@
     "lodash": "^4.17.21",
     "postcss": "^7.0.35",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.1.0",
+    "tesseract.js": "^2.1.4",
     "vue": "^2.6.11",
     "vue-range-component": "^1.0.3",
     "vue-router": "^3.5.1"

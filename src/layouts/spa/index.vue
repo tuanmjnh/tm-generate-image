@@ -84,6 +84,20 @@
                     </a>
                   </li>
                 </router-link>
+                <router-link to="/tesseract" v-slot="{ href, navigate}" custom>
+                  <li>
+                    <a :href="href" @click="navigate" class="flex items-center px-3 hover:text-gray-900 transition-colors duration-200 mb-4">
+                      <div class="mr-3 rounded-md bg-gradient-to-br from-yellow-400 to-orange-500"><svg class="h-6 w-6" viewBox="0 0 24 24">
+                          <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M13.196 6.02a1 1 0 01.785 1.176l-2 10a1 1 0 01-1.961-.392l2-10a1 1 0 011.176-.784z" fill="#FDE68A"></path>
+                          <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M15.293 9.293a1 1 0 011.414 0l2 2a1 1 0 010 1.414l-2 2a1 1 0 01-1.414-1.414L16.586 12l-1.293-1.293a1 1 0 010-1.414zM8.707 9.293a1 1 0 010 1.414L7.414 12l1.293 1.293a1 1 0 11-1.414 1.414l-2-2a1 1 0 010-1.414l2-2a1 1 0 011.414 0z"
+                                fill="#FDF4FF"></path>
+                        </svg></div>
+                      Tesseract
+                    </a>
+                  </li>
+                </router-link>
                 <!-- <li><a href="https://tailwindui.com/components?utm_source=tailwindcss&amp;utm_medium=navigation"
                      class="flex items-center px-3 hover:text-gray-900 transition-colors duration-200 mb-4">
                     <div class="mr-3 rounded-md bg-gradient-to-br from-purple-500 to-indigo-500">

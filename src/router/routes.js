@@ -17,6 +17,12 @@ export const constant = [
     name: 'generate',
     meta: { title: 'generate', icon: 'generate', constant: true },
     component: () => import('@/views/generate')
+  },
+  {
+    path: '/tesseract',
+    name: 'tesseract',
+    meta: { title: 'tesseract', icon: 'tesseract', constant: true },
+    component: () => import('@/views/tesseract')
   }
 ];
 
