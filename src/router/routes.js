@@ -23,6 +23,12 @@ export const constant = [
     name: 'tesseract',
     meta: { title: 'tesseract', icon: 'tesseract', constant: true },
     component: () => import('@/views/tesseract')
+  },
+  {
+    path: '/youtube-video',
+    name: 'youtube-video',
+    meta: { title: 'youtube-video', icon: 'youtube-video', constant: true },
+    component: () => import('@/views/youtube-video')
   }
 ];
 

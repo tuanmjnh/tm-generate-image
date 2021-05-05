@@ -98,6 +98,18 @@
                     </a>
                   </li>
                 </router-link>
+                <router-link to="/youtube-video" v-slot="{ href, navigate}" custom>
+                  <li>
+                    <a :href="href" @click="navigate" class="flex items-center px-3 hover:text-gray-900 transition-colors duration-200 mb-4">
+                      <div class="mr-3 rounded-md bg-gradient-to-br from-green-400 to-cyan-500"><svg class="h-6 w-6" viewBox="0 0 24 24">
+                          <path d="M8 9a1 1 0 011-1h8a1 1 0 011 1v7.5a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 018 16.5V9z" fill="#6EE7B7"></path>
+                          <path d="M15 7a1 1 0 00-1-1H7a1 1 0 00-1 1v9.5A1.5 1.5 0 007.5 18H16v-.085a1.5 1.5 0 01-1-1.415V7z" fill="#ECFDF5"></path>
+                          <path fill="#A7F3D0" d="M8 8h5v4H8zM8 14h5v2H8z"></path>
+                        </svg></div>
+                      Youtube video
+                    </a>
+                  </li>
+                </router-link>
                 <!-- <li><a href="https://tailwindui.com/components?utm_source=tailwindcss&amp;utm_medium=navigation"
                      class="flex items-center px-3 hover:text-gray-900 transition-colors duration-200 mb-4">
                     <div class="mr-3 rounded-md bg-gradient-to-br from-purple-500 to-indigo-500">

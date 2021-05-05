@@ -1,0 +1,534 @@
+<template>
+  <div>
+    <div class="mb-2 text-center">
+      <h1 class="font-weight-bold my-3">Lấy text từ video</h1>
+    </div>
+    <div>
+      <span class="font-weight-bold ml-2">*Danh sách ngôn ngữ hỗ trợ: </span>
+      <span>Trung Quốc, Hà Lan, Anh, Pháp, Đức, Ý, Nhật, Bồ Đào Nha, Tây Ba
+        Nha</span>
+    </div>
+    <button
+            class="btn btn-upload-video-main ml-3"
+            @click="$refs.modalInputFile.showModal()"
+            v-if="urlVideo && urlVideo !== ''">
+      Chọn Video Khác
+    </button>
+
+    <div class="p-3">
+      <div class="row col-12" style="justify-content: center;">
+        <div
+             ref="containerVideo"
+             id="container-video"
+             class="col-8 border reset"
+             v-if="urlVideo && urlVideo !== ''">
+          <div style="display: flex">
+            <canvas id="canvas"></canvas>
+
+            <video
+                   ref="videoPlay"
+                   id="videoPlay"
+                   style="width: 100%; height: 100%"
+                   :src="urlVideo"
+                   @timeupdate="OnTimeUpdate"
+                   @play="onVideoPlay"
+                   @loadedmetadata="onLoadedMeradata"
+                   controls
+                   hidden></video>
+
+            <vue-draggable-resizable
+                                     :key="key"
+                                     :min-width="50"
+                                     :min-height="50"
+                                     :width="imageCrop.width"
+                                     :height="imageCrop.width"
+                                     :x="imageCrop.x"
+                                     :y="imageCrop.y"
+                                     class-name="drag-resize-item-active"
+                                     :active="true"
+                                     :parent="true"
+                                     @dragstop="onDragStop"
+                                     @resizestop="onResizeStop">
+              <div style="width: 100%; height: 100%; object-fit:fill"></div>
+            </vue-draggable-resizable>
+          </div>
+        </div>
+
+        <div v-else class="text-center">
+          <div
+               style="font-size: 120px;"
+               class="color-pink"
+               @click="$refs.modalInputFile.showModal()">
+            <i class="fad fa-cloud-upload"></i>
+          </div>
+          <button
+                  class="btn btn-upload-video-main"
+                  @click="$refs.modalInputFile.showModal()">
+            Tải Lên Video
+          </button>
+        </div>
+
+        <div class="col-4" v-if="urlVideo && urlVideo !== ''">
+          <canvas
+                  id="imagePreview"
+                  style="border:1px solid #d3d3d3;max-width: 100%;width: 100%;; max-height: 500px;object-fit: contain;">
+            Your browser does not support the HTML5 canvas tag.
+          </canvas>
+          <div class=" controls">
+            <button class="btn" v-if="!isPlay" @click="onClickPlay">
+              <i class="fas fa-play"></i>
+            </button>
+            <button class="btn" v-else @click="onClickPause">
+              <i class="fas fa-pause"></i>
+            </button>
+            <button class="btn" @click="onClickStopVideo">
+              <i class="fas fa-stop"></i>
+            </button>
+            <div
+                 class="timer text-center"
+                 style="min-width:150px; max-width:150px">
+              <span class="font-weight-bold fs-xl">{{ getTimeVideo }}</span>
+            </div>
+            <button class="btn" @click="previousTime">
+              <i class="fad fa-backward"></i>
+            </button>
+            <button class="btn" @click="nextTime">
+              <i class="fad fa-forward"></i>
+            </button>
+            <b-form-input
+                          type="number"
+                          min="0.1"
+                          max="30"
+                          step="0.1"
+                          style="width: 70px"
+                          @change="onChangeNextStep"
+                          :value="nextStep" />
+          </div>
+          <div>
+            <div class="controls-button">
+              <button class="btn btn-primary px-4 mt-2" @click="onGetText">
+                Lấy Text
+              </button>
+              <button class="btn btn-success px-5 mt-2 mx-3" @click="onSave">
+                Lưu
+              </button>
+              <button
+                      class="btn btn-info px-5 mt-2"
+                      @click="onAuto"
+                      v-if="!isAutoRunning">
+                Auto
+              </button>
+              <button
+                      class="btn btn-danger px-5 mt-2"
+                      @click="onStop"
+                      v-if="isAutoRunning">
+                Stop Auto
+              </button>
+            </div>
+            <div class="">
+              <span class="font-weight-bold fs-md">Text:</span>
+              <b-form-textarea
+                               rows="5"
+                               style="font-size: 20px"
+                               @keydown="onKeyDown"
+                               v-model="textPreview" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-3" v-if="urlVideo && urlVideo !== ''">
+      <span class="font-weight-bold fs-lg">Kết quả:</span>
+      <button
+              class="btn btn-danger btn-sm mb-2 px-3"
+              @click="contentResult = ''">
+        Xóa
+      </button>
+      <b-form-textarea
+                       rows="20"
+                       style="font-size: 20px"
+                       @keydown="onKeyDown"
+                       v-model="contentResult" />
+    </div>
+
+    <loading
+             :active.sync="isLoading"
+             :can-cancel="true"
+             :is-full-page="true"
+             :height="60"
+             :width="60"></loading>
+    <modal-input-file
+                      ref="modalInputFile"
+                      :typeEdit="'SIMPLE_EDIT'"
+                      @pushNewVideo="uploadVideoMain"
+                      :totalVideoProps="1"></modal-input-file>
+  </div>
+</template>
+
+<script>
+import ModalInputFile from "@/components/ModalInputFile";
+import Loading from "vue-loading-overlay";
+import Utils from "@/utils";
+import Axios from "axios";
+import ServiceApi from "@/services/ServiceApi";
+
+export default {
+  components: {
+    ModalInputFile,
+    Loading
+  },
+  data() {
+    return {
+      isPlay: false,
+      currentTimeVideo: 0,
+      textPreview: "",
+      contentResult: "",
+      urlVideo: "",
+      isLoading: false,
+      key: 0,
+      nextStep: 1,
+      imageCrop: {
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 200
+      },
+      oldResult: "",
+      isAutoRunning: false
+    };
+  },
+  computed: {
+    getTimeVideo() {
+      return Utils.secondsToHHMMSSM(this.currentTimeVideo);
+    }
+  },
+
+  methods: {
+    similarity(s1, s2) {
+      var longer = s1;
+      var shorter = s2;
+      if (s1.length < s2.length) {
+        longer = s2;
+        shorter = s1;
+      }
+      var longerLength = longer.length;
+      if (longerLength == 0) {
+        return 1.0;
+      }
+      return (
+        (longerLength - this.editDistance(longer, shorter)) /
+        parseFloat(longerLength)
+      );
+    },
+    editDistance(s1, s2) {
+      s1 = s1.toLowerCase();
+      s2 = s2.toLowerCase();
+
+      var costs = new Array();
+      for (var i = 0; i <= s1.length; i++) {
+        var lastValue = i;
+        for (var j = 0; j <= s2.length; j++) {
+          if (i == 0) costs[j] = j;
+          else {
+            if (j > 0) {
+              var newValue = costs[j - 1];
+              if (s1.charAt(i - 1) != s2.charAt(j - 1))
+                newValue =
+                  Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+              costs[j - 1] = lastValue;
+              lastValue = newValue;
+            }
+          }
+        }
+        if (i > 0) costs[s2.length] = lastValue;
+      }
+      return costs[s2.length];
+    },
+    onChangeNextStep(value) {
+      this.nextStep = parseFloat(value);
+    },
+    async onStop() {
+      this.isAutoRunning = false;
+    },
+    async onAuto() {
+      // console.log(" #### onAuto ########");
+
+      // let listImage = await this.extractFramesFromVideo(this.urlVideo, 1);
+      // console.log(" #### listImage: ", listImage);
+      // return
+      try {
+        let videoElement = document.getElementById("videoPlay");
+        this.isAutoRunning = true;
+        while (videoElement.currentTime < videoElement.duration) {
+          if (!this.isAutoRunning) {
+            return;
+          }
+          videoElement.currentTime += this.nextStep;
+          let text = await this.getText();
+          if (!text || text === "") {
+            await Utils.sleep(1000);
+            continue;
+          }
+          let checkExist = false;
+          if (this.oldResult) {
+            let same = this.similarity(this.oldResult, text);
+            if (same > 0.5) {
+              checkExist = true;
+            }
+            if (text.includes(this.oldResult)) {
+              checkExist = true;
+            }
+          }
+          if (!checkExist) {
+            this.contentResult += text + "\n\n";
+            this.oldResult = text;
+          }
+          await Utils.sleep(1000);
+        }
+        this.$swal({
+          type: "success",
+          title: "Xong.!"
+        });
+      } catch (error) {
+        console.log(error);
+      }
+      this.isAutoRunning = false;
+    },
+    async getText() {
+      var canvas = document.getElementById("imagePreview");
+      var ctx = canvas.getContext("2d");
+      var video = document.getElementById("canvas");
+      canvas.width = this.imageCrop.width;
+      canvas.height = this.imageCrop.height;
+      ctx.drawImage(
+        video,
+        this.imageCrop.x,
+        this.imageCrop.y,
+        this.imageCrop.width,
+        this.imageCrop.height,
+        0,
+        0,
+        this.imageCrop.width,
+        this.imageCrop.height
+      );
+
+      try {
+        let payload = {
+          image: canvas.toDataURL().replace("data:image/png;base64,", "")
+        };
+        let res = await ServiceApi.imageToText(payload);
+
+        if (res && res.status === 200) {
+          this.$notify({
+            type: "success",
+            title: "Thành Công.!"
+          });
+          return res.data.result.trim();
+        }
+
+        if (res && res.status === 400) {
+          throw new Error(res.data);
+        }
+      } catch (error) {
+        throw error;
+      }
+    },
+    async onGetText() {
+      try {
+        this.textPreview = await this.getText();
+      } catch (error) { }
+    },
+    onResizeStop: function (x, y, width, height) {
+      event.stopPropagation();
+      this.imageCrop.x = x;
+      this.imageCrop.y = y;
+      this.imageCrop.width = width;
+      this.imageCrop.height = height;
+    },
+    onDragStop: function (x, y) {
+      event.stopPropagation();
+      this.imageCrop.x = x;
+      this.imageCrop.y = y;
+    },
+
+    uploadVideoMain(data) {
+      this.isLoading = data.isLoading;
+      if (!data.isLoading && data.url) {
+        this.urlVideo = data.url;
+      }
+    },
+    onSave() {
+      if (this.textPreview) {
+        this.contentResult += this.textPreview + "\n\n";
+      }
+      this.textPreview = "";
+    },
+    onKeyDown(event) {
+      event.stopPropagation();
+    },
+    onClickPlay() {
+      if (this.$refs.videoPlay) {
+        this.$refs.videoPlay.play();
+        this.isPlay = true;
+      }
+    },
+    onClickPause() {
+      if (this.$refs.videoPlay) {
+        this.$refs.videoPlay.pause();
+        this.isPlay = false;
+      }
+    },
+    onClickStopVideo() {
+      if (this.$refs.videoPlay) {
+        this.$refs.videoPlay.currentTime = 0;
+      }
+    },
+    OnTimeUpdate(event) {
+      this.currentTimeVideo = parseFloat(event.target.currentTime.toFixed(2));
+      var canvas = document.getElementById("canvas");
+      var ctx = canvas.getContext("2d");
+      var video = document.getElementById("videoPlay");
+      ctx.drawImage(
+        event.target,
+        0,
+        0,
+        video.videoWidth,
+        video.videoHeight,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+    },
+    onVideoPlay(event) {
+      var canvas = document.getElementById("canvas");
+      var ctx = canvas.getContext("2d");
+      var video = document.getElementById("videoPlay");
+
+      function loop() {
+        if (!event.target.paused && !event.target.ended) {
+          ctx.drawImage(
+            event.target,
+            0,
+            0,
+            video.videoWidth,
+            video.videoHeight,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+          setTimeout(loop, 1000 / 30); // drawing at 30fps
+        }
+      }
+      loop();
+    },
+    onLoadedMeradata(event) {
+      var canvas = document.getElementById("canvas");
+      var container = document.getElementById("container-video");
+      canvas.width = container.clientWidth;
+      canvas.height =
+        (container.clientWidth * event.target.videoHeight) /
+        event.target.videoWidth;
+      event.target.currentTime = 1;
+      event.target.currentTime = 0;
+
+      this.key++;
+    },
+    previousTime() {
+      this.$refs.videoPlay.currentTime -= this.nextStep;
+    },
+    nextTime() {
+      this.$refs.videoPlay.currentTime += this.nextStep;
+    },
+    handleKeyCode(event) {
+      if (!this.$refs.videoPlay) {
+        return;
+      }
+      switch (event.code) {
+        case "ArrowLeft":
+          console.log(" Previous ");
+          this.$refs.videoPlay.currentTime -= this.nextStep;
+          event.preventDefault();
+          return true;
+          break;
+        case "ArrowRight":
+          console.log(" Next ", typeof this.nextStep);
+          this.$refs.videoPlay.currentTime += this.nextStep;
+          event.preventDefault();
+          return true;
+          break;
+        case "Space":
+          console.log(" Space ", this.$refs);
+          if (!this.$refs.videoPlay.paused) {
+            this.$refs.videoPlay.pause();
+          } else {
+            this.$refs.videoPlay.play();
+          }
+          this.isPlay = !this.isPlay;
+          event.preventDefault();
+          return true;
+          break;
+      }
+    }
+  },
+  destroyed() {
+    document.removeEventListener("keydown", this.handleKeyCode);
+  },
+  async mounted() {
+    document.addEventListener("keydown", this.handleKeyCode);
+  }
+};
+</script>
+
+<style scoped>
+#container-video {
+  max-height: 50%;
+}
+.controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px;
+  margin-bottom: 10px;
+  border: 1px dotted;
+}
+
+.controls-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px;
+  margin-bottom: 10px;
+}
+
+.drag-resize-item {
+  border: none;
+}
+.drag-resize-item-active {
+  border: 2px solid #ff5c97;
+}
+.item-right-content:hover {
+  border: 1px dashed #ff5c97;
+}
+.color-pink:hover {
+  cursor: pointer;
+}
+.btn-upload-video-main {
+  background-color: #ff5c97;
+  border-radius: 9px;
+  color: rgb(255, 255, 255);
+  font-weight: 500;
+  margin-top: 10px;
+  min-width: 200px;
+  padding-bottom: 12px;
+  padding-top: 12px;
+}
+
+.btn-upload-video-main:hover {
+  background-color: white;
+  border: 1px solid #ff5c97;
+  color: #ff5c97;
+}
+</style>
